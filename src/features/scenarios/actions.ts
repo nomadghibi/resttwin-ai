@@ -3,7 +3,15 @@
 import { auth } from '@/auth';
 import { ScenarioCreateSchema } from '@/lib/validation/scenario';
 import * as scenarioService from '@/server/services/scenario';
+import type { AgentActivity } from '@/agents/agent-types';
 import type { FormActionState } from '@/features/restaurant/actions';
+
+export type ScenarioRunState = {
+  success?: boolean;
+  message?: string;
+  agentActivities?: AgentActivity[];
+  dataQualityScore?: number;
+} | null;
 import { redirect } from 'next/navigation';
 
 export async function createScenarioAction(
@@ -39,9 +47,9 @@ export async function createScenarioAction(
 }
 
 export async function runScenarioAction(
-  _prev: FormActionState | null,
+  _prev: ScenarioRunState,
   formData: FormData,
-): Promise<FormActionState> {
+): Promise<ScenarioRunState> {
   const session = await auth();
   if (!session?.user?.id || !session.user.organizationId) return { message: 'Unauthorized' };
 
@@ -49,10 +57,13 @@ export async function runScenarioAction(
   if (!scenarioId) return { message: 'Missing scenario ID' };
 
   try {
-    await scenarioService.runScenario(session.user.id, session.user.organizationId, scenarioId);
+    const { agentActivities, dataQualityScore } = await scenarioService.runScenario(
+      session.user.id,
+      session.user.organizationId,
+      scenarioId,
+    );
+    return { success: true, agentActivities, dataQualityScore };
   } catch (err) {
     return { message: err instanceof Error ? err.message : 'Scenario run failed.' };
   }
-
-  return { success: true, message: 'Scenario run complete.' };
 }

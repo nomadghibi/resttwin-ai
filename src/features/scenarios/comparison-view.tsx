@@ -9,6 +9,7 @@ import { RecommendationCard } from '@/components/recommendation-card';
 import { WeeklyChart } from '@/components/charts/weekly-chart';
 import { CostBreakdownChart } from '@/components/charts/cost-breakdown-chart';
 import { runScenarioAction } from './actions';
+import type { ScenarioRunState } from './actions';
 import type { SimulationResult } from '@/simulation/types';
 import type { ScenarioDelta } from '@/simulation/comparison';
 import type { RecommendationType, AgentActivity } from '@/agents/agent-types';
@@ -29,15 +30,21 @@ export function ComparisonView({ scenario, baselineResult, scenarioResult, delta
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [lastRun, setLastRun] = useState<ScenarioRunState>(null);
 
   function handleRun() {
     setError(null);
+    setLastRun(null);
     const fd = new FormData();
     fd.append('scenarioId', scenario.id);
     startTransition(async () => {
       const result = await runScenarioAction(null, fd);
-      if (result?.success) router.refresh();
-      else setError(result?.message ?? 'Run failed.');
+      if (result?.success) {
+        setLastRun(result);
+        router.refresh();
+      } else {
+        setError(result?.message ?? 'Run failed.');
+      }
     });
   }
 
@@ -177,6 +184,30 @@ export function ComparisonView({ scenario, baselineResult, scenarioResult, delta
       {!hasResult && (
         <div className="rounded-lg border border-dashed border-gray-300 py-12 text-center">
           <p className="text-sm text-gray-500">No results yet — run the scenario to see the comparison.</p>
+        </div>
+      )}
+
+      {/* Agent activity feed — shown after a run in this session */}
+      {lastRun?.agentActivities && lastRun.agentActivities.length > 0 && (
+        <div>
+          <p className="mb-3 text-sm font-semibold text-gray-700">
+            Agent Pipeline
+            {lastRun.dataQualityScore !== undefined && (
+              <span className="ml-2 text-xs font-normal text-gray-400">
+                Data quality: {lastRun.dataQualityScore}/100
+              </span>
+            )}
+          </p>
+          <div className="rounded-lg border bg-white divide-y">
+            {lastRun.agentActivities.map((a, i) => (
+              <div key={i} className="flex items-start gap-4 px-5 py-3">
+                <span className="mt-0.5 w-32 shrink-0 text-xs font-semibold text-gray-500">
+                  {a.agent}
+                </span>
+                <span className="text-sm text-gray-700">{a.finding}</span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
