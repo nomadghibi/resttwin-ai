@@ -1,0 +1,250 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum MembershipRole {
+  OWNER
+  ADMIN
+  VIEWER
+}
+
+enum BusinessModel {
+  DINE_IN
+  TAKEOUT
+  DELIVERY
+  HYBRID
+}
+
+enum CapacityImpact {
+  KITCHEN
+  SERVICE
+  CASHIER
+  DELIVERY
+}
+
+enum SimulationType {
+  BASELINE
+  SCENARIO
+}
+
+enum SimulationStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum ScenarioType {
+  PRICE_CHANGE_PERCENT
+  STAFFING_CHANGE
+  HOURS_CHANGE
+  DELIVERY_TOGGLE
+  PROMOTION
+}
+
+enum DecisionType {
+  RECOMMENDED
+  NOT_RECOMMENDED
+  TEST_FIRST
+  NEED_MORE_DATA
+}
+
+enum ConfidenceLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+// ─── Auth / Tenant ────────────────────────────────────────────────────────────
+
+model User {
+  id           String       @id @default(cuid())
+  name         String
+  email        String       @unique
+  passwordHash String
+  createdAt    DateTime     @default(now())
+  memberships  Membership[]
+}
+
+model Organization {
+  id              String           @id @default(cuid())
+  name            String
+  createdAt       DateTime         @default(now())
+  memberships     Membership[]
+  restaurants     Restaurant[]
+  simulationRuns  SimulationRun[]
+  scenarios       Scenario[]
+  recommendations Recommendation[]
+}
+
+model Membership {
+  id             String         @id @default(cuid())
+  userId         String
+  organizationId String
+  role           MembershipRole
+  user           User           @relation(fields: [userId], references: [id])
+  organization   Organization   @relation(fields: [organizationId], references: [id])
+
+  @@unique([userId, organizationId])
+  @@index([userId])
+  @@index([organizationId])
+}
+
+// ─── Restaurant ───────────────────────────────────────────────────────────────
+
+model Restaurant {
+  id                     String          @id @default(cuid())
+  organizationId         String
+  name                   String
+  restaurantType         String
+  addressText            String          @default("")
+  city                   String          @default("")
+  state                  String          @default("")
+  postalCode             String          @default("")
+  country                String          @default("US")
+  businessModel          BusinessModel   @default(DINE_IN)
+  seatingCapacity        Int             @default(50)
+  avgTableTurnMinutes    Int             @default(60)
+  monthlyRent            Int             @default(0)
+  monthlyUtilities       Int             @default(0)
+  monthlyOtherFixedCosts Int             @default(0)
+  targetFoodCostPercent  Float           @default(30)
+  targetLaborCostPercent Float           @default(30)
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+  organization           Organization    @relation(fields: [organizationId], references: [id])
+  operatingHours         OperatingHour[]
+  menuItems              MenuItem[]
+  staffRoles             StaffRole[]
+  staffShifts            StaffShift[]
+  simulationRuns         SimulationRun[]
+  scenarios              Scenario[]
+
+  @@index([organizationId])
+}
+
+model OperatingHour {
+  id           String     @id @default(cuid())
+  restaurantId String
+  dayOfWeek    Int
+  isOpen       Boolean    @default(true)
+  openTime     String     @default("11:00")
+  closeTime    String     @default("22:00")
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@unique([restaurantId, dayOfWeek])
+  @@index([restaurantId])
+}
+
+// ─── Menu ─────────────────────────────────────────────────────────────────────
+
+model MenuItem {
+  id               String     @id @default(cuid())
+  restaurantId     String
+  name             String
+  category         String
+  priceCents       Int
+  foodCostCents    Int
+  prepMinutes      Int        @default(10)
+  popularityWeight Float      @default(1.0)
+  isActive         Boolean    @default(true)
+  restaurant       Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@index([restaurantId])
+}
+
+// ─── Staffing ─────────────────────────────────────────────────────────────────
+
+model StaffRole {
+  id                  String         @id @default(cuid())
+  restaurantId        String
+  name                String
+  hourlyWageCents     Int
+  capacityImpact      CapacityImpact
+  defaultProductivity Float          @default(1.0)
+  restaurant          Restaurant     @relation(fields: [restaurantId], references: [id])
+  staffShifts         StaffShift[]
+
+  @@index([restaurantId])
+}
+
+model StaffShift {
+  id           String     @id @default(cuid())
+  restaurantId String
+  staffRoleId  String
+  dayOfWeek    Int
+  startTime    String
+  endTime      String
+  quantity     Int        @default(1)
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  staffRole    StaffRole  @relation(fields: [staffRoleId], references: [id])
+
+  @@index([restaurantId, dayOfWeek])
+}
+
+// ─── Simulation ───────────────────────────────────────────────────────────────
+
+model SimulationRun {
+  id                String           @id @default(cuid())
+  restaurantId      String
+  organizationId    String
+  type              SimulationType
+  status            SimulationStatus @default(PENDING)
+  inputSnapshotJson Json
+  resultJson        Json?
+  createdAt         DateTime         @default(now())
+  restaurant        Restaurant       @relation(fields: [restaurantId], references: [id])
+  organization      Organization     @relation(fields: [organizationId], references: [id])
+  baselineForScenarios Scenario[]    @relation("ScenarioBaseline")
+  scenarioForScenarios Scenario[]    @relation("ScenarioRun")
+
+  @@index([organizationId, restaurantId])
+}
+
+// ─── Scenario ─────────────────────────────────────────────────────────────────
+
+model Scenario {
+  id              String         @id @default(cuid())
+  restaurantId    String
+  organizationId  String
+  name            String
+  type            ScenarioType
+  parametersJson  Json
+  baselineRunId   String?
+  scenarioRunId   String?
+  createdAt       DateTime       @default(now())
+  restaurant      Restaurant     @relation(fields: [restaurantId], references: [id])
+  organization    Organization   @relation(fields: [organizationId], references: [id])
+  baselineRun     SimulationRun? @relation("ScenarioBaseline", fields: [baselineRunId], references: [id])
+  scenarioRun     SimulationRun? @relation("ScenarioRun", fields: [scenarioRunId], references: [id])
+  recommendation  Recommendation?
+
+  @@index([organizationId, restaurantId])
+}
+
+// ─── Recommendation ───────────────────────────────────────────────────────────
+
+model Recommendation {
+  id                 String          @id @default(cuid())
+  scenarioId         String          @unique
+  organizationId     String
+  decision           DecisionType
+  confidence         ConfidenceLevel
+  summary            String
+  expectedImpactJson Json
+  evidenceJson       Json
+  assumptionsJson    Json
+  risksJson          Json
+  nextAction         String
+  createdAt          DateTime        @default(now())
+  scenario           Scenario        @relation(fields: [scenarioId], references: [id])
+  organization       Organization    @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
+}
