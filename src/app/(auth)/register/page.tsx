@@ -3,75 +3,63 @@
 import { useActionState } from 'react';
 import Link from 'next/link';
 import { registerAction } from '@/features/restaurant/actions';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 
 type Errors = Partial<Record<'name' | 'email' | 'password' | 'orgName' | '_', string[]>>;
-
-const inputCls =
-  'w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-gray-500 focus:outline-none';
 
 export default function RegisterPage() {
   const [state, formAction, isPending] = useActionState(registerAction, null);
   const errors = (state?.errors ?? {}) as Errors;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
-      <div className="w-full max-w-sm rounded-lg border bg-white p-8 shadow-sm">
-        <h1 className="mb-6 text-xl font-bold text-gray-900">Create account</h1>
-
-        {errors._?.[0] && (
-          <div className="mb-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-            {errors._[0]}
-          </div>
-        )}
-
-        <form action={formAction} className="space-y-4">
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Your name</label>
-            <input name="name" type="text" required className={inputCls} />
-            {errors.name?.[0] && <p className="mt-1 text-xs text-red-600">{errors.name[0]}</p>}
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Email</label>
-            <input name="email" type="email" required autoComplete="email" className={inputCls} />
-            {errors.email?.[0] && <p className="mt-1 text-xs text-red-600">{errors.email[0]}</p>}
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Password</label>
-            <input
-              name="password"
-              type="password"
-              required
-              autoComplete="new-password"
-              placeholder="Min 8 characters"
-              className={inputCls}
-            />
-            {errors.password?.[0] && (
-              <p className="mt-1 text-xs text-red-600">{errors.password[0]}</p>
-            )}
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Restaurant name</label>
-            <input name="orgName" type="text" required className={inputCls} />
-            {errors.orgName?.[0] && (
-              <p className="mt-1 text-xs text-red-600">{errors.orgName[0]}</p>
-            )}
-          </div>
-          <button
-            type="submit"
-            disabled={isPending}
-            className="w-full rounded bg-gray-900 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50"
-          >
-            {isPending ? 'Creating account…' : 'Create account'}
-          </button>
-        </form>
-
-        <p className="mt-4 text-center text-sm text-gray-500">
+    <div className="flex min-h-screen items-center justify-center bg-muted/40">
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle>Create account</CardTitle>
+          <CardDescription>Set up your restaurant digital twin in minutes.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {errors._?.[0] && (
+            <div className="mb-4 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {errors._[0]}
+            </div>
+          )}
+          <form action={formAction} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="name">Your name</Label>
+              <Input id="name" name="name" required placeholder="Jane Smith" />
+              {errors.name?.[0] && <p className="text-xs text-destructive">{errors.name[0]}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" name="email" type="email" required autoComplete="email" placeholder="jane@restaurant.com" />
+              {errors.email?.[0] && <p className="text-xs text-destructive">{errors.email[0]}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="password">Password</Label>
+              <Input id="password" name="password" type="password" required autoComplete="new-password" placeholder="Min 8 characters" />
+              {errors.password?.[0] && <p className="text-xs text-destructive">{errors.password[0]}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="orgName">Restaurant name</Label>
+              <Input id="orgName" name="orgName" required placeholder="The Corner Bistro" />
+              {errors.orgName?.[0] && <p className="text-xs text-destructive">{errors.orgName[0]}</p>}
+            </div>
+            <Button type="submit" disabled={isPending} className="w-full">
+              {isPending ? 'Creating account…' : 'Create account'}
+            </Button>
+          </form>
+        </CardContent>
+        <CardFooter className="justify-center text-sm text-muted-foreground">
           Already have an account?{' '}
-          <Link href="/login" className="font-medium text-gray-900 underline">
+          <Link href="/login" className="ml-1 font-medium text-foreground underline underline-offset-4">
             Sign in
           </Link>
-        </p>
-      </div>
+        </CardFooter>
+      </Card>
     </div>
   );
 }

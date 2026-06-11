@@ -70,7 +70,7 @@ export async function registerAction(
 
   // Sign in after registration (throws NEXT_REDIRECT on success)
   try {
-    await signIn('credentials', { email, password, redirectTo: '/setup' });
+    await signIn('credentials', { email, password, redirectTo: '/onboarding' });
   } catch (error) {
     if (error instanceof AuthError) {
       return { errors: { _: ['Account created but sign-in failed. Please log in.'] } };
