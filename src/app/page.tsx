@@ -1,5 +1,4 @@
 import { auth } from '@/auth';
-import { redirect } from 'next/navigation';
 import Link from 'next/link';
 
 const VALUE_CARDS = [
@@ -30,7 +29,7 @@ const USE_CASES = [
 
 export default async function HomePage() {
   const session = await auth();
-  if (session?.user) redirect('/dashboard');
+  const isLoggedIn = !!session?.user;
 
   return (
     <div className="min-h-screen bg-white">
@@ -38,15 +37,26 @@ export default async function HomePage() {
       <header className="flex items-center justify-between px-6 py-4 border-b border-gray-100 max-w-6xl mx-auto">
         <span className="text-lg font-bold text-gray-900">RestTwin AI</span>
         <div className="flex items-center gap-3">
-          <Link href="/login" className="text-sm text-gray-600 hover:text-gray-900">
-            Sign in
-          </Link>
-          <Link
-            href="/register"
-            className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700"
-          >
-            Get started
-          </Link>
+          {isLoggedIn ? (
+            <Link
+              href="/dashboard"
+              className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700"
+            >
+              Go to Dashboard →
+            </Link>
+          ) : (
+            <>
+              <Link href="/login" className="text-sm text-gray-600 hover:text-gray-900">
+                Sign in
+              </Link>
+              <Link
+                href="/register"
+                className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700"
+              >
+                Get started
+              </Link>
+            </>
+          )}
         </div>
       </header>
 
