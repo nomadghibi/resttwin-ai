@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/db';
 import { requireOrgAccess } from './auth';
-import { getRestaurantByOrg } from '@/server/repositories/restaurant';
+import { getRestaurant } from './restaurant';
 import * as repo from '@/server/repositories/scenario';
 import { buildSnapshot } from '@/simulation/snapshot';
 import { runSimulation } from '@/simulation/engine';
@@ -31,7 +31,7 @@ export async function createScenario(
   parametersJson: object,
 ) {
   await requireOrgAccess(userId, organizationId);
-  const restaurant = await getRestaurantByOrg(organizationId);
+  const restaurant = await getRestaurant(userId, organizationId);
   if (!restaurant) throw new NotFoundError('Complete restaurant setup first.');
   return repo.createScenario({ restaurantId: restaurant.id, organizationId, name, type, parametersJson });
 }
@@ -43,7 +43,7 @@ export async function runScenario(userId: string, organizationId: string, scenar
   if (!scenario || scenario.organizationId !== organizationId) throw new ForbiddenError();
 
   // Get latest baseline run
-  const restaurant = await getRestaurantByOrg(organizationId);
+  const restaurant = await getRestaurant(userId, organizationId);
   if (!restaurant) throw new NotFoundError('Restaurant not found');
 
   const baselineRun = await prisma.simulationRun.findFirst({

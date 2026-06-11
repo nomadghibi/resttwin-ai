@@ -1,14 +1,12 @@
-import { requireOrgAccess } from './auth';
 import * as repo from '@/server/repositories/staffing';
-import { getRestaurantByOrg } from '@/server/repositories/restaurant';
+import { getRestaurant } from './restaurant';
 import { ForbiddenError, NotFoundError } from '@/lib/errors';
 import { dollarsToCents } from '@/lib/money';
 import type { StaffRoleFormInput, StaffShiftFormInput } from '@/lib/validation/staffing';
 import type { CapacityImpact } from '@prisma/client';
 
 async function resolveRestaurant(userId: string, organizationId: string) {
-  await requireOrgAccess(userId, organizationId);
-  const restaurant = await getRestaurantByOrg(organizationId);
+  const restaurant = await getRestaurant(userId, organizationId);
   if (!restaurant) throw new NotFoundError('No restaurant found. Complete setup first.');
   return restaurant;
 }

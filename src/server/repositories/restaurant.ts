@@ -6,13 +6,19 @@ export async function getRestaurantByOrg(organizationId: string) {
   return prisma.restaurant.findFirst({ where: { organizationId } });
 }
 
-export async function upsertRestaurant(
-  organizationId: string,
-  data: RestaurantProfileInput,
-) {
-  const existing = await getRestaurantByOrg(organizationId);
+export async function getRestaurantsByOrg(organizationId: string) {
+  return prisma.restaurant.findMany({
+    where: { organizationId },
+    orderBy: { createdAt: 'asc' },
+  });
+}
 
-  const payload = {
+export async function getRestaurantByIdAndOrg(id: string, organizationId: string) {
+  return prisma.restaurant.findFirst({ where: { id, organizationId } });
+}
+
+function buildPayload(data: RestaurantProfileInput) {
+  return {
     name: data.name,
     restaurantType: data.restaurantType,
     addressText: data.addressText,
@@ -29,12 +35,25 @@ export async function upsertRestaurant(
     targetFoodCostPercent: data.targetFoodCostPct,
     targetLaborCostPercent: data.targetLaborCostPct,
   };
+}
 
+export async function createRestaurant(organizationId: string, data: RestaurantProfileInput) {
+  return prisma.restaurant.create({ data: { ...buildPayload(data), organizationId } });
+}
+
+export async function updateRestaurant(id: string, data: RestaurantProfileInput) {
+  return prisma.restaurant.update({ where: { id }, data: buildPayload(data) });
+}
+
+export async function upsertRestaurant(
+  organizationId: string,
+  data: RestaurantProfileInput,
+) {
+  const existing = await getRestaurantByOrg(organizationId);
   if (existing) {
-    return prisma.restaurant.update({ where: { id: existing.id }, data: payload });
+    return updateRestaurant(existing.id, data);
   }
-
-  return prisma.restaurant.create({ data: { ...payload, organizationId } });
+  return createRestaurant(organizationId, data);
 }
 
 export async function getOperatingHours(restaurantId: string) {

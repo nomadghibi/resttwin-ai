@@ -70,6 +70,7 @@ export function RestaurantForm({ restaurant: r }: Props) {
 
   return (
     <form action={formAction} className="space-y-6">
+      {r?.id && <input type="hidden" name="restaurantId" value={r.id} />}
       {state?.success && (
         <div className="rounded border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
           {state.message}

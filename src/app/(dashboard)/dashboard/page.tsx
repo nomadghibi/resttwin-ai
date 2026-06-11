@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { getRestaurant } from '@/server/services/restaurant';
 import { getBaselineRuns } from '@/server/services/simulation';
 import { getScenarios } from '@/server/services/scenario';
+import { prisma } from '@/lib/db';
 import { DashboardView } from '@/features/dashboard/dashboard-view';
 import type { SimulationResult } from '@/simulation/types';
 import type { RecommendationType } from '@/agents/agent-types';
@@ -25,8 +26,8 @@ export default async function DashboardPage() {
   const latestRun = baselineRuns[0] ?? null;
   const baselineResult = (latestRun?.resultJson as unknown as SimulationResult) ?? null;
 
-  // Get latest recommendation from most recent run scenario
-  const latestRanScenario = scenarios.find((s) => s.recommendation);
+  // Latest ran scenario + its result for chart overlay
+  const latestRanScenario = scenarios.find((s) => s.scenarioRunId && s.recommendation);
   const latestRecommendation = latestRanScenario?.recommendation
     ? ({
         decision: latestRanScenario.recommendation.decision,
@@ -40,12 +41,21 @@ export default async function DashboardPage() {
       } as RecommendationType)
     : null;
 
+  let latestScenarioResult: SimulationResult | null = null;
+  if (latestRanScenario?.scenarioRunId) {
+    const run = await prisma.simulationRun.findUnique({
+      where: { id: latestRanScenario.scenarioRunId },
+    });
+    latestScenarioResult = (run?.resultJson as unknown as SimulationResult) ?? null;
+  }
+
   return (
     <DashboardView
       restaurantName={restaurant.name}
       baselineResult={baselineResult}
       latestRecommendation={latestRecommendation}
       scenarioName={latestRanScenario?.name}
+      latestScenarioResult={latestScenarioResult}
     />
   );
 }

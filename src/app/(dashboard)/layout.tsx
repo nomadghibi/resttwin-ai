@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { Suspense } from 'react';
+import { RestaurantSwitcher } from '@/features/restaurant/restaurant-switcher';
 
 const NAV = [
   { href: '/dashboard', label: 'Dashboard' },
@@ -16,7 +18,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex min-h-screen">
       <aside className="flex w-56 flex-col bg-gray-900 p-4 text-white">
-        <div className="mb-8 text-lg font-bold tracking-tight">RestTwin AI</div>
+        <div className="mb-6 text-lg font-bold tracking-tight">RestTwin AI</div>
+        <Suspense fallback={null}>
+          <RestaurantSwitcher />
+        </Suspense>
         <nav className="flex flex-col gap-1">
           {NAV.map((item) => (
             <Link

@@ -7,6 +7,7 @@ import { formatCents } from '@/lib/money';
 import { DeltaBadge } from '@/components/delta-badge';
 import { RecommendationCard } from '@/components/recommendation-card';
 import { WeeklyChart } from '@/components/charts/weekly-chart';
+import { CostBreakdownChart } from '@/components/charts/cost-breakdown-chart';
 import { runScenarioAction } from './actions';
 import type { SimulationResult } from '@/simulation/types';
 import type { ScenarioDelta } from '@/simulation/comparison';
@@ -143,10 +144,24 @@ export function ComparisonView({ scenario, baselineResult, scenarioResult, delta
             </table>
           </div>
 
-          {/* Weekly chart */}
+          {/* Weekly revenue chart */}
           <div className="rounded-lg border bg-white p-5">
             <p className="mb-3 text-sm font-semibold text-gray-700">Weekly Revenue Comparison</p>
             <WeeklyChart baseline={baselineResult.byDay} scenario={scenarioResult.byDay} />
+          </div>
+
+          {/* Cost breakdown charts side by side */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="rounded-lg border bg-white p-5">
+              <p className="mb-1 text-sm font-semibold text-gray-700">Baseline — Cost Breakdown</p>
+              <p className="mb-3 text-xs text-gray-400">Costs vs. revenue line</p>
+              <CostBreakdownChart byDay={baselineResult.byDay} totals={baselineResult.totals} />
+            </div>
+            <div className="rounded-lg border bg-white p-5">
+              <p className="mb-1 text-sm font-semibold text-gray-700">Scenario — Cost Breakdown</p>
+              <p className="mb-3 text-xs text-gray-400">Costs vs. revenue line</p>
+              <CostBreakdownChart byDay={scenarioResult.byDay} totals={scenarioResult.totals} />
+            </div>
           </div>
         </>
       )}

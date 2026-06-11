@@ -12,6 +12,7 @@ import {
   RegisterSchema,
 } from '@/lib/validation/restaurant';
 import * as restaurantService from '@/server/services/restaurant';
+import { setActiveRestaurantId } from '@/lib/active-restaurant';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -93,6 +94,7 @@ export async function saveProfileAction(
   }
 
   const raw = Object.fromEntries(formData.entries());
+  const restaurantId = typeof raw.restaurantId === 'string' ? raw.restaurantId : undefined;
   const result = RestaurantProfileSchema.safeParse(raw);
 
   if (!result.success) {
@@ -100,11 +102,21 @@ export async function saveProfileAction(
   }
 
   try {
-    await restaurantService.saveRestaurant(
-      session.user.id,
-      session.user.organizationId,
-      result.data,
-    );
+    if (restaurantId) {
+      await restaurantService.updateRestaurant(
+        session.user.id,
+        session.user.organizationId,
+        restaurantId,
+        result.data,
+      );
+    } else {
+      const created = await restaurantService.createRestaurant(
+        session.user.id,
+        session.user.organizationId,
+        result.data,
+      );
+      await setActiveRestaurantId(created.id);
+    }
   } catch {
     return { message: 'Failed to save restaurant. Please try again.' };
   }

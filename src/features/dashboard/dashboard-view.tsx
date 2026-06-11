@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { KpiCard } from '@/components/kpi-card';
 import { WeeklyChart } from '@/components/charts/weekly-chart';
+import { CostBreakdownChart } from '@/components/charts/cost-breakdown-chart';
 import { RecommendationCard } from '@/components/recommendation-card';
 import type { SimulationResult } from '@/simulation/types';
 import type { RecommendationType } from '@/agents/agent-types';
@@ -13,6 +14,7 @@ type Props = {
   baselineResult: SimulationResult | null;
   latestRecommendation: RecommendationType | null;
   scenarioName?: string;
+  latestScenarioResult?: SimulationResult | null;
 };
 
 const QUICK_SCENARIOS = [
@@ -22,7 +24,13 @@ const QUICK_SCENARIOS = [
   { label: 'Run promotion', href: '/scenarios?template=PROMOTION' },
 ];
 
-export function DashboardView({ restaurantName, baselineResult, latestRecommendation, scenarioName }: Props) {
+export function DashboardView({
+  restaurantName,
+  baselineResult,
+  latestRecommendation,
+  scenarioName,
+  latestScenarioResult,
+}: Props) {
   if (!baselineResult) {
     return (
       <div className="space-y-6">
@@ -78,10 +86,25 @@ export function DashboardView({ restaurantName, baselineResult, latestRecommenda
         </div>
       )}
 
-      {/* Weekly revenue chart */}
+      {/* Weekly revenue chart — baseline + latest scenario overlay */}
       <div className="rounded-lg border bg-white p-5">
-        <p className="mb-3 text-sm font-semibold text-gray-700">Weekly Revenue by Day</p>
-        <WeeklyChart baseline={baselineResult.byDay} />
+        <div className="mb-3 flex items-center justify-between">
+          <p className="text-sm font-semibold text-gray-700">Weekly Revenue by Day</p>
+          {latestScenarioResult && scenarioName && (
+            <p className="text-xs text-gray-400">vs. {scenarioName}</p>
+          )}
+        </div>
+        <WeeklyChart
+          baseline={baselineResult.byDay}
+          scenario={latestScenarioResult?.byDay}
+        />
+      </div>
+
+      {/* Cost breakdown chart */}
+      <div className="rounded-lg border bg-white p-5">
+        <p className="mb-1 text-sm font-semibold text-gray-700">Daily Cost Breakdown</p>
+        <p className="mb-3 text-xs text-gray-400">Stacked costs vs. revenue line — bar above line = unprofitable day</p>
+        <CostBreakdownChart byDay={baselineResult.byDay} totals={baselineResult.totals} />
       </div>
 
       {/* Latest recommendation */}

@@ -1,14 +1,11 @@
 import { prisma } from '@/lib/db';
-import { requireOrgAccess } from './auth';
-import { getRestaurantByOrg } from '@/server/repositories/restaurant';
+import { getRestaurant } from './restaurant';
 import { buildSnapshot } from '@/simulation/snapshot';
 import { runSimulation } from '@/simulation/engine';
 import { NotFoundError } from '@/lib/errors';
 
 export async function runBaselineSimulation(userId: string, organizationId: string) {
-  await requireOrgAccess(userId, organizationId);
-
-  const restaurant = await getRestaurantByOrg(organizationId);
+  const restaurant = await getRestaurant(userId, organizationId);
   if (!restaurant) throw new NotFoundError('No restaurant found. Complete setup first.');
 
   const [menuItems, shifts, hours] = await Promise.all([
@@ -41,8 +38,7 @@ export async function runBaselineSimulation(userId: string, organizationId: stri
 }
 
 export async function getBaselineRuns(userId: string, organizationId: string) {
-  await requireOrgAccess(userId, organizationId);
-  const restaurant = await getRestaurantByOrg(organizationId);
+  const restaurant = await getRestaurant(userId, organizationId);
   if (!restaurant) return [];
 
   return prisma.simulationRun.findMany({
