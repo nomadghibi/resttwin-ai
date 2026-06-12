@@ -20,7 +20,7 @@ const inputCls =
   'w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-gray-500 focus:outline-none';
 
 type ScenarioType = (typeof TYPES)[number];
-type Props = { roles: StaffRole[] };
+type Props = { roles: StaffRole[]; initialType?: ScenarioType | null };
 
 function buildDefaultName(type: ScenarioType, params: Record<string, string>): string {
   switch (type) {
@@ -72,10 +72,10 @@ function buildParams(type: ScenarioType, fields: Record<string, string>): object
   }
 }
 
-export function ScenarioBuilder({ roles }: Props) {
+export function ScenarioBuilder({ roles, initialType }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [selectedType, setSelectedType] = useState<ScenarioType | null>(null);
+  const [selectedType, setSelectedType] = useState<ScenarioType | null>(initialType ?? null);
   const [fields, setFields] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
 

@@ -7,10 +7,19 @@ import { getRoles } from '@/server/services/staffing';
 import { ScenarioBuilder } from '@/features/scenarios/scenario-builder';
 import { SCENARIO_TYPE_LABELS } from '@/lib/validation/scenario';
 
+const VALID_TYPES = [
+  'PRICE_CHANGE_PERCENT',
+  'STAFFING_CHANGE',
+  'HOURS_CHANGE',
+  'DELIVERY_TOGGLE',
+  'PROMOTION',
+] as const;
+type ScenarioType = (typeof VALID_TYPES)[number];
+
 export default async function ScenariosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ new?: string }>;
+  searchParams: Promise<{ new?: string; template?: string }>;
 }) {
   const session = await auth();
   if (!session?.user?.id || !session.user.organizationId) redirect('/login');
@@ -33,7 +42,10 @@ export default async function ScenariosPage({
   ]);
 
   const sp = await searchParams;
-  const showNew = sp.new === '1';
+  const templateParam = sp.template && (VALID_TYPES as readonly string[]).includes(sp.template)
+    ? (sp.template as ScenarioType)
+    : null;
+  const showNew = sp.new === '1' || templateParam !== null;
 
   return (
     <div className="mx-auto max-w-4xl space-y-8">
@@ -57,8 +69,9 @@ export default async function ScenariosPage({
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900">Choose scenario type</h2>
             <Link href="/scenarios" className="text-sm text-gray-500 hover:underline">Cancel</Link>
+
           </div>
-          <ScenarioBuilder roles={roles} />
+          <ScenarioBuilder roles={roles} initialType={templateParam} />
         </div>
       )}
 
