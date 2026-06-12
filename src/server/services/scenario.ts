@@ -107,6 +107,8 @@ export async function runScenario(userId: string, organizationId: string, scenar
       assumptionsJson: recommendation.assumptions as object,
       risksJson: recommendation.risks as object,
       nextAction: recommendation.nextAction,
+      dataQualityScore,
+      agentActivitiesJson: agentActivities as object,
     },
     create: {
       scenarioId,
@@ -119,6 +121,8 @@ export async function runScenario(userId: string, organizationId: string, scenar
       assumptionsJson: recommendation.assumptions as object,
       risksJson: recommendation.risks as object,
       nextAction: recommendation.nextAction,
+      dataQualityScore,
+      agentActivitiesJson: agentActivities as object,
     },
   });
 

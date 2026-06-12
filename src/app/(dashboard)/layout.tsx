@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Suspense } from 'react';
+import { auth } from '@/auth';
 import { RestaurantSwitcher } from '@/features/restaurant/restaurant-switcher';
 
 const NAV = [
@@ -14,7 +15,10 @@ const NAV = [
   { href: '/reports', label: 'Reports' },
 ];
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const session = await auth();
+  const isDemo = session?.user?.email === 'demo@resttwin.ai';
+
   return (
     <div className="flex min-h-screen">
       <aside className="flex w-56 flex-col bg-gray-900 p-4 text-white">
@@ -34,7 +38,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           ))}
         </nav>
       </aside>
-      <main className="flex-1 bg-gray-50 p-8">{children}</main>
+      <div className="flex flex-1 flex-col">
+        {isDemo && (
+          <div className="bg-amber-50 border-b border-amber-200 px-6 py-2 text-xs text-amber-800 flex items-center justify-between">
+            <span>
+              Demo mode — Corner Bistro · Read-only changes are safe.{' '}
+              <Link href="/register" className="font-semibold underline hover:text-amber-900">
+                Create your own account →
+              </Link>
+            </span>
+          </div>
+        )}
+        <main className="flex-1 bg-gray-50 p-8">{children}</main>
+      </div>
     </div>
   );
 }

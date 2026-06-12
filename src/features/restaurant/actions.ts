@@ -83,6 +83,21 @@ export async function registerAction(
   return { success: true };
 }
 
+// ─── Demo login ───────────────────────────────────────────────────────────────
+
+export async function demoLoginAction() {
+  try {
+    await signIn('credentials', {
+      email: 'demo@resttwin.ai',
+      password: 'demo1234',
+      redirectTo: '/dashboard',
+    });
+  } catch (error) {
+    if (error instanceof AuthError) return;
+    throw error;
+  }
+}
+
 // ─── Restaurant profile ───────────────────────────────────────────────────────
 
 export async function saveProfileAction(

@@ -1,5 +1,6 @@
 import { auth } from '@/auth';
 import Link from 'next/link';
+import { demoLoginAction } from '@/features/restaurant/actions';
 
 const VALUE_CARDS = [
   {
@@ -81,15 +82,17 @@ export default async function HomePage() {
           >
             Create free account
           </Link>
-          <Link
-            href="/login"
-            className="rounded-lg border border-gray-300 px-6 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-          >
-            Sign in with demo account
-          </Link>
+          <form action={demoLoginAction}>
+            <button
+              type="submit"
+              className="rounded-lg border border-gray-300 px-6 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+            >
+              Try demo →
+            </button>
+          </form>
         </div>
         <p className="mt-3 text-xs text-gray-400">
-          Demo: demo@resttwin.ai / demo1234
+          No sign-up required · pre-loaded with Corner Bistro data
         </p>
       </section>
 

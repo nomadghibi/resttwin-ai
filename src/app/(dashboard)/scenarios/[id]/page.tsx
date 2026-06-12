@@ -6,6 +6,7 @@ import { prisma } from '@/lib/db';
 import { ComparisonView } from '@/features/scenarios/comparison-view';
 import { compareSimulations } from '@/simulation/comparison';
 import type { SimulationResult } from '@/simulation/types';
+import type { AgentActivity } from '@/agents/agent-types';
 import Link from 'next/link';
 
 export default async function ScenarioDetailPage({
@@ -24,13 +25,11 @@ export default async function ScenarioDetailPage({
     redirect('/scenarios');
   }
 
-  // Latest baseline
   const baselineRuns = await getBaselineRuns(session.user.id, session.user.organizationId);
   const baselineRun = scenario.baselineRunId
     ? await prisma.simulationRun.findUnique({ where: { id: scenario.baselineRunId } })
     : baselineRuns[0] ?? null;
 
-  // Scenario run
   const scenarioRun = scenario.scenarioRunId
     ? await prisma.simulationRun.findUnique({ where: { id: scenario.scenarioRunId } })
     : null;
@@ -39,6 +38,11 @@ export default async function ScenarioDetailPage({
   const scenarioResult = (scenarioRun?.resultJson as unknown as SimulationResult) ?? null;
   const delta =
     baselineResult && scenarioResult ? compareSimulations(baselineResult, scenarioResult) : null;
+
+  const persistedActivities = scenario.recommendation?.agentActivitiesJson
+    ? (scenario.recommendation.agentActivitiesJson as unknown as AgentActivity[])
+    : null;
+  const persistedQualityScore = scenario.recommendation?.dataQualityScore ?? null;
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -52,6 +56,8 @@ export default async function ScenarioDetailPage({
         baselineResult={baselineResult}
         scenarioResult={scenarioResult}
         delta={delta}
+        persistedActivities={persistedActivities}
+        persistedQualityScore={persistedQualityScore}
       />
     </div>
   );

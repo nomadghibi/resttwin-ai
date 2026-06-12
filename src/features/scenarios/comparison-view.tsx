@@ -22,15 +22,21 @@ type Props = {
   baselineResult: SimulationResult | null;
   scenarioResult: SimulationResult | null;
   delta: ScenarioDelta | null;
+  persistedActivities?: AgentActivity[] | null;
+  persistedQualityScore?: number | null;
 };
 
 function pct(n: number) { return `${n.toFixed(1)}%`; }
 
-export function ComparisonView({ scenario, baselineResult, scenarioResult, delta }: Props) {
+export function ComparisonView({ scenario, baselineResult, scenarioResult, delta, persistedActivities, persistedQualityScore }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [lastRun, setLastRun] = useState<ScenarioRunState>(null);
+
+  // Use in-session result if just ran, otherwise fall back to persisted DB data
+  const displayActivities = lastRun?.agentActivities ?? persistedActivities;
+  const displayQualityScore = lastRun?.dataQualityScore ?? persistedQualityScore;
 
   function handleRun() {
     setError(null);
@@ -187,19 +193,19 @@ export function ComparisonView({ scenario, baselineResult, scenarioResult, delta
         </div>
       )}
 
-      {/* Agent activity feed — shown after a run in this session */}
-      {lastRun?.agentActivities && lastRun.agentActivities.length > 0 && (
+      {/* Agent activity feed */}
+      {displayActivities && displayActivities.length > 0 && (
         <div>
           <p className="mb-3 text-sm font-semibold text-gray-700">
             Agent Pipeline
-            {lastRun.dataQualityScore !== undefined && (
+            {displayQualityScore !== null && displayQualityScore !== undefined && (
               <span className="ml-2 text-xs font-normal text-gray-400">
-                Data quality: {lastRun.dataQualityScore}/100
+                Data quality: {displayQualityScore}/100
               </span>
             )}
           </p>
           <div className="rounded-lg border bg-white divide-y">
-            {lastRun.agentActivities.map((a, i) => (
+            {displayActivities.map((a, i) => (
               <div key={i} className="flex items-start gap-4 px-5 py-3">
                 <span className="mt-0.5 w-32 shrink-0 text-xs font-semibold text-gray-500">
                   {a.agent}
