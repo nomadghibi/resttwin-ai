@@ -1,6 +1,7 @@
 'use server';
 
 import { auth } from '@/auth';
+import { redirect } from 'next/navigation';
 import { signIn } from '@/auth';
 import { AuthError } from 'next-auth';
 import { prisma } from '@/lib/db';
@@ -101,6 +102,7 @@ export async function saveProfileAction(
     return { errors: result.error.flatten().fieldErrors };
   }
 
+  let isCreate = false;
   try {
     if (restaurantId) {
       await restaurantService.updateRestaurant(
@@ -116,11 +118,13 @@ export async function saveProfileAction(
         result.data,
       );
       await setActiveRestaurantId(created.id);
+      isCreate = true;
     }
   } catch {
     return { message: 'Failed to save restaurant. Please try again.' };
   }
 
+  if (isCreate) redirect('/setup');
   return { success: true, message: 'Restaurant profile saved.' };
 }
 
