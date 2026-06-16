@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import { auth } from '@/auth';
 import { RestaurantSwitcher } from '@/features/restaurant/restaurant-switcher';
+import { OnboardingProgress } from '@/features/onboarding/onboarding-progress';
 
 const NAV = [
   { href: '/dashboard', label: 'Dashboard' },
@@ -25,6 +26,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <div className="mb-6 text-lg font-bold tracking-tight">RestTwin AI</div>
         <Suspense fallback={null}>
           <RestaurantSwitcher />
+        </Suspense>
+        <Suspense fallback={null}>
+          <OnboardingProgress />
         </Suspense>
         <nav className="flex flex-col gap-1">
           {NAV.map((item) => (

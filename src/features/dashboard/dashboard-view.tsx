@@ -15,7 +15,52 @@ type Props = {
   latestRecommendation: RecommendationType | null;
   scenarioName?: string;
   latestScenarioResult?: SimulationResult | null;
+  dataQualityScore?: number;
+  dataQualityMissing?: string[];
+  dataQualityReadiness?: 'NOT_READY' | 'PARTIAL' | 'READY';
 };
+
+function DataQualityPanel({
+  score,
+  readiness,
+  missing,
+}: {
+  score: number;
+  readiness: 'NOT_READY' | 'PARTIAL' | 'READY';
+  missing: string[];
+}) {
+  const colorMap = {
+    READY: { bar: 'bg-emerald-500', badge: 'bg-emerald-100 text-emerald-700', label: 'Ready' },
+    PARTIAL: { bar: 'bg-yellow-400', badge: 'bg-yellow-100 text-yellow-700', label: 'Partial' },
+    NOT_READY: { bar: 'bg-red-400', badge: 'bg-red-100 text-red-700', label: 'Not Ready' },
+  };
+  const c = colorMap[readiness];
+
+  return (
+    <div className="rounded-lg border bg-white p-4">
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-sm font-semibold text-gray-700">Data Quality</p>
+        <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${c.badge}`}>{c.label}</span>
+      </div>
+      <div className="flex items-center gap-3 mb-2">
+        <div className="flex-1 h-2 rounded bg-gray-100">
+          <div className={`h-2 rounded transition-all ${c.bar}`} style={{ width: `${score}%` }} />
+        </div>
+        <span className="text-sm font-bold text-gray-800 tabular-nums">{score}/100</span>
+      </div>
+      {missing.length > 0 && (
+        <ul className="mt-2 space-y-0.5">
+          {missing.map((m) => (
+            <li key={m} className="text-xs text-gray-500 flex items-start gap-1.5">
+              <span className="mt-0.5 text-gray-400">–</span>
+              <span>{m}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 const QUICK_SCENARIOS = [
   { label: 'Raise prices 8%', href: '/scenarios?template=PRICE_CHANGE_PERCENT' },
@@ -30,6 +75,9 @@ export function DashboardView({
   latestRecommendation,
   scenarioName,
   latestScenarioResult,
+  dataQualityScore,
+  dataQualityMissing,
+  dataQualityReadiness,
 }: Props) {
   if (!baselineResult) {
     return (
@@ -73,6 +121,15 @@ export function DashboardView({
         <KpiCard label="Est. Net Profit" value={formatCents(t.estimatedNetProfitCents)} highlight={netColor} />
         <KpiCard label="Avg Wait Risk" value={`${t.avgWaitRisk.toFixed(0)}/100`} highlight={t.avgWaitRisk > 70 ? 'red' : t.avgWaitRisk > 40 ? 'neutral' : 'green'} />
       </div>
+
+      {/* Data quality score */}
+      {dataQualityScore !== undefined && dataQualityReadiness && (
+        <DataQualityPanel
+          score={dataQualityScore}
+          readiness={dataQualityReadiness}
+          missing={dataQualityMissing ?? []}
+        />
+      )}
 
       {/* Bottleneck alerts */}
       {baselineResult.bottlenecks.length > 0 && (

@@ -7,6 +7,7 @@ import { prisma } from '@/lib/db';
 import { DashboardView } from '@/features/dashboard/dashboard-view';
 import type { SimulationResult } from '@/simulation/types';
 import type { RecommendationType } from '@/agents/agent-types';
+import { calculateDataQualityScore } from '@/agents/setup-agent';
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -18,10 +19,16 @@ export default async function DashboardPage() {
     redirect('/setup');
   }
 
-  const [baselineRuns, scenarios] = await Promise.all([
+  const [baselineRuns, scenarios, menuItems, staffRoles, staffShifts, hours] = await Promise.all([
     getBaselineRuns(session.user.id, session.user.organizationId),
     getScenarios(session.user.id, session.user.organizationId),
+    prisma.menuItem.findMany({ where: { restaurantId: restaurant.id } }),
+    prisma.staffRole.findMany({ where: { restaurantId: restaurant.id } }),
+    prisma.staffShift.findMany({ where: { restaurantId: restaurant.id } }),
+    prisma.operatingHour.findMany({ where: { restaurantId: restaurant.id } }),
   ]);
+
+  const dataQuality = calculateDataQualityScore({ restaurant, menuItems, staffRoles, staffShifts, hours });
 
   const latestRun = baselineRuns[0] ?? null;
   const baselineResult = (latestRun?.resultJson as unknown as SimulationResult) ?? null;
@@ -56,6 +63,9 @@ export default async function DashboardPage() {
       latestRecommendation={latestRecommendation}
       scenarioName={latestRanScenario?.name}
       latestScenarioResult={latestScenarioResult}
+      dataQualityScore={dataQuality.score}
+      dataQualityMissing={dataQuality.missing}
+      dataQualityReadiness={dataQuality.readiness}
     />
   );
 }
